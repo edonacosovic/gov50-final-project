@@ -11,37 +11,15 @@ output:
 
 ## Project thoughts
 
-The central question I would like to investigate is: Do periods of increased immigration in New York City lead to increased arrests by the NYPD ? In this study, I plan to examine the extent to which periods in New York City history where the city has declared itself as a sanctuary city and the number of arrests made by the NYPD. I hypothesize that there is going to be an increased number of arrests made by the NYPD during these periods. During periods where New York City publicly reinstates their status as a sanctuary city, I expect that it is more likely for there to be a shift in public sentiment about the local government’s policy and thus more people committing crimes. During these periods, there might be fluctuations in crime because of this newfound sanctuary status made by the city. My sample is going to compromise of two samples that are anchored to two historical instances: first, during the 1980s, and second, amid the COVID-19 pandemic. Examining data from these specific time frames allows for a focused exploration of the relationship between sanctuary city status and the number of arrests made by the NYPD. 
-The data I will retrieve is from the OpenDataNYC website where all of the data regarding arrests over time is included. For my analysis I will use the =1 for the designated times when the “sanctuary city” status was declared and =0 for the rest/not declared times. The outcome variable would be the amount of arrests made by the NYPD during each period. We will be able to see variation in comparing to the mean of the none sanctuary period arrests. By conducting a regression analysis of the amount of arrests made by te NYPD on the sanctuary city indicator variable for each of these periods, the results would give me insight on the impact of these declarations on law enforcement activities in NYC, and possibly support for my hypothesis. The pattern that would support my hypothesis is if there was a statistically significant increase in the number of arrests in this period. 
+Final Report: Immigration and Crime
 
-```{r}
-library(ggplot2)
-library(dplyr)
-library(lubridate) 
+Introduction
+The central question I would like to investigate is what kind of effect do asylum seekers have with arrests in 2023? In this study, I take two data sets that have data within the time frame January 2023 to June 2023. The first data set explores the number of arrests carried out by the NYPD. The second data set explores the number of asylum reports initiated by the United States Department of Homeland Security. With this data, I explore the relationship between Arrests and Asylum Reports. I hypothesized that there is going to be an increased number of arrests made in conjunction with asylum reports. This is because I expect that in big cities like NYC that bear the brunt of asylum seekers, there could be a shift in public sentiment about the local government’s policy and thus more people committing crimes. With this, it would be interesing to see the crime fluctuations as a result of NYC’s constant commitment to immigrants (via sanctuary city status).
 
-arrests_data <- read.csv("NYPD_Arrest_Data__Year_to_Date__20231103.csv")
-arrests_data$ARREST_DATE <- order(mdy(arrests_data$ARREST_DATE))
+Data
+I have two data sets received from two different sources. The first is data I retrieved from the Department of Homeland Security and Department of Justice in regards to Asylum Processing Rule Cohort Reports from January to June of 2023. The second data I retrieved from the New York Police Department regarding the arrests in the same period of time. 
 
-arrests_data <- read.csv("NYPD_Arrest_Data__Year_to_Date__20231103.csv")
-
-arrests_data$Date <- as.Date(arrests_data$ARREST_DATE, format = "%m/%d/%Y")
-
-arrests_data$Year <- format(arrests_data$Date, "%Y")
-arrests_data$Month <- format(arrests_data$Date, "%m")
-
-arrests_data_2023 <- filter(arrests_data, Year == "2023")
-
-monthly_counts <- table(arrests_data_2023$Month)
-
-monthly_counts_df <- data.frame(Month = as.character(names(monthly_counts)), Count = as.numeric(monthly_counts))
-
-monthly_counts_df$Month <- factor(monthly_counts_df$Month, levels = sprintf("%02d", 1:12))
-
-plot <- ggplot(data = monthly_counts_df, aes(x = Month, y = Count, group = 1)) +
-  geom_line() +
-  labs(title = "Number of Arrests Per Month in 2023", x = "Month", y = "Number of Arrests")
-print(plot)
-```
+The Asylum Processing Rule Cohort Reports data that I used combined all the “Credible Fear Claim Outcomes” which essentially means people that stated that they were claiming asylum as a result of credible fears. Thus, you will see that the both positive and negative fear claims were recorded. The data was recorded from the information they gathered from judges and courts in order to probably gain insights on the outcomes of these credible fear claims, which is also likely designed to discourage fraudulent asylum claims. However, this information can importantly be used to determine the general trend of asylum seekers/credible immigration seekers into the US. 
 
 ```{r}
 library(ggplot2)
@@ -74,9 +52,44 @@ plot <- ggplot(data = outcome_data, aes(x = Month, y = Count, group = 1)) +
 
 print(plot)
 
+```
+
+The NYPD Crime dataset that I used took all the of the filed arrest reports all over the city and logged data regarding the arrest key, arrest date, description, arrest precinct, etc.
+This data is likely gathered to provide insights into the outcomes of credible fear claims processed under the Asylum Minded Deterrence Initiative (AMI). AMI is designed to discourage fraudulent asylum claims by swiftly processing and adjudicating cases.
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate) 
+
+arrests_data <- read.csv("NYPD_Arrest_Data__Year_to_Date__20231103.csv")
+arrests_data$ARREST_DATE <- order(mdy(arrests_data$ARREST_DATE))
+
+arrests_data <- read.csv("NYPD_Arrest_Data__Year_to_Date__20231103.csv")
+
+arrests_data$Date <- as.Date(arrests_data$ARREST_DATE, format = "%m/%d/%Y")
+
+arrests_data$Year <- format(arrests_data$Date, "%Y")
+arrests_data$Month <- format(arrests_data$Date, "%m")
+
+arrests_data_2023 <- filter(arrests_data, Year == "2023")
+
+monthly_counts <- table(arrests_data_2023$Month)
+
+monthly_counts_df <- data.frame(Month = as.character(names(monthly_counts)), Count = as.numeric(monthly_counts))
+
+monthly_counts_df$Month <- factor(monthly_counts_df$Month, levels = sprintf("%02d", 1:12))
+
+plot <- ggplot(data = monthly_counts_df, aes(x = Month, y = Count, group = 1)) +
+  geom_line() +
+  labs(title = "Number of Arrests Per Month in 2023", x = "Month", y = "Number of Arrests")
+print(plot)
 
 ```
 
+The outcome variable (Y) would be the number of filed asylum reports. The predictor variable (X) would be the number of arrests within the same period. By conducting a regression analysis of the amount of arrests made by the NYPD across this period, the results would give us insight on the impact of these asylum seekers on law enforcement activities in NYC, and possibly support for my hypothesis. The pattern that would support my hypothesis is if there was some positive correlation where with an increase in the number of asylum reports would lead to an increase in arrests.
+
+Results
 
 ```{r}
 
@@ -106,4 +119,21 @@ scatter_plot <- ggplot(data = combined_data, aes(x = Count.x, y = Count.y)) +
 
 print(scatter_plot)
 ```
+
+The graph above shows a linear regression discussing the relationship between the number of arrests and asylum reports in the same 6-month period. This relationship as per the graph displays a negative correlation where as the number of arrests increases, the number of asylum report cases tends to decrease, and vice versa. Thus, my hypothesis was not necessarily correct.
+
+I conducted a cross sectional analysis of the two variables. The p-value associated with the number of arrests is 0.190. Due to the fact that it is greater than 0.05, the coefficient is not statistically significant. Thus, we should be pretty cautious regarding our ability to interpret the causality between the relationship of the two variables. Thus, this suggests that the relationship between the x and y variables can be due to random chance rather than some relationship between the two.
+
+However, it's crucial to keep in mind that correlation does not imply causation. The negative slope merely suggests that there is a statistical tendency for the two variables to move in opposite directions. The reasons for this negative correlation could be complex and may involve various factors. For instance, it might be that increased law enforcement efforts or security measures lead to a decrease in the number of 
+
+However, because the datasets I used were limited in terms of scope over time as well as not both being in NYC, this case-specific negative correlation doesn’t imply causation. This negative slope is merely suggestign that there is a case-specific statistical tendence for the two variables to move in opposite directions. Other reasons that could be skewing this is attempts to reduce crime have been heightened in NYC while asylum cases remain relatively unaffected – skewing the results. To fix this, I could try to have more data points by using a wider time range and maybe try to find more numbers regarding immigration trends in NYC specifically rather than asylum cases processed federally. Thus, there could be complex other factors impacting the data.
+
+Conclusion
+In conclusion, my data might imply some negative correlation between the number of arrests and number of asylum reports– while arrests increase, the number of processed asylum reports decrease – but the results are statistically insignificant. Thus, we cannot assume that there is any causal relationship and be wary to take this correlation as true. Instead, we should opt for some more data to test the statistical significance of that information. This information does not support my hypothesis, but it doesn’t mean that it is necessarily incorrect – there’s just not information to make a solid conclusion on it right now.
+
+As mentioned before, there are some significant limitations in my data regarding the time frame. Due to the fact that it only includes data from the last 6 months, we can see that the data is pretty limited and current events on crime deterrence efforts can be skewing the data. Moreover, by finding more data points, we can see if this relationship is moreso geared towards randomness or underlying relationship. Additionally, if I found asylum cases strictly done in the New York City region, that would increase the accuracy of the results even more.
+
+If I had more time to do this project, I would definitely try to compile data from the last 5 years in order to account for variations as a result of COVID and the last year and a half that is still recovering from COVID (crime-wise). Moreover, I would spend much more time trying to find more accurate numbers on recent immigration numbers, since that’s much harder to find than the arrest data. I would possibly email immigration judges in the NYC region to find this information for the sake of making more accurate conclusions.
+
+
 
