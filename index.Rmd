@@ -92,14 +92,14 @@ The outcome variable (Y) would be the number of filed asylum reports. The predic
 Results
 
 ```{r}
+library(ggplot2)
+library(knitr)
 
 monthly_counts_df$Month <- format(as.Date(paste("2023", monthly_counts_df$Month, "01", sep = "-")), "%B")
-
 combined_data <- merge(monthly_counts_df, outcome_data, by = "Month", all = TRUE)
 
 sum(is.na(combined_data$Count.x))
 sum(is.na(combined_data$Count.y))
-
 
 combined_data$Count.x[is.na(combined_data$Count.x)] <- mean(combined_data$Count.x, na.rm = TRUE)
 combined_data$Count.y[is.na(combined_data$Count.y)] <- mean(combined_data$Count.y, na.rm = TRUE)
@@ -108,16 +108,19 @@ combined_data <- combined_data[complete.cases(combined_data$Count.x, combined_da
 
 regression_model <- lm(Count.y ~ Count.x, data = combined_data, na.action = na.exclude)
 
-summary(regression_model)
+summary_table <- summary(regression_model)$coefficients
+summary_table <- as.data.frame(summary_table)
 
-library(ggplot2)
+kable(summary_table, format = "html", caption = "Regression Results")
+
 
 scatter_plot <- ggplot(data = combined_data, aes(x = Count.x, y = Count.y)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, color = "red") +
-  labs(title = "Relationship between Arrests and Asylum Reports (2023)", x = "Number of Arrests", y = "Asylum Reports")
+  labs(title = "Relationship between Arrests and Asylum Reports (2023)", x = "Number of Arrests", y = "Number of Asylum Reports")
 
 print(scatter_plot)
+
 ```
 
 The graph above shows a linear regression discussing the relationship between the number of arrests and asylum reports in the same 6-month period. This relationship as per the graph displays a negative correlation where as the number of arrests increases, the number of asylum report cases tends to decrease, and vice versa. Thus, my hypothesis was not necessarily correct.
