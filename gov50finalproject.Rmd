@@ -79,57 +79,29 @@ print(plot)
 
 
 ```{r}
+monthly_counts_df$Month <- format(as.Date(paste("2023", monthly_counts_df$Month, "01", sep = "-")), "%B")
+
+combined_data <- merge(monthly_counts_df, outcome_data, by = "Month", all = TRUE)
+
+sum(is.na(combined_data$Count.x))
+sum(is.na(combined_data$Count.y))
+
+
+combined_data$Count.x[is.na(combined_data$Count.x)] <- mean(combined_data$Count.x, na.rm = TRUE)
+combined_data$Count.y[is.na(combined_data$Count.y)] <- mean(combined_data$Count.y, na.rm = TRUE)
+
+combined_data <- combined_data[complete.cases(combined_data$Count.x, combined_data$Count.y), ]
+
+regression_model <- lm(Count.y ~ Count.x, data = combined_data, na.action = na.exclude)
+
+summary(regression_model)
+
 library(ggplot2)
-library(dplyr)
-library(lubridate)
-library(tidyr)
-library(gridExtra)
 
-# Plot 1: Number of Arrests Per Month in 2023
-arrests_data <- read.csv("NYPD_Arrest_Data__Year_to_Date__20231103.csv")
+scatter_plot <- ggplot(data = combined_data, aes(x = Count.x, y = Count.y)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Relationship between Arrests and Asylum Reports (2023)", x = "Number of Arrests", y = "Asylum Reports")
 
-arrests_data$Date <- as.Date(arrests_data$ARREST_DATE, format = "%m/%d/%Y")
-arrests_data_2023 <- filter(arrests_data, year(Date) == 2023)
-
-monthly_counts <- table(arrests_data_2023$Month)
-
-monthly_counts_df <- data.frame(Month = as.character(names(monthly_counts)), Count = as.numeric(monthly_counts))
-monthly_counts_df$Month <- factor(monthly_counts_df$Month, levels = sprintf("%02d", 1:12))
-
-plot_arrests <- ggplot(data = monthly_counts_df, aes(x = Month, y = Count, group = 1)) +
-  geom_line() +
-  labs(title = "Number of Arrests Per Month in 2023", x = "Month", y = "Number of Arrests")
-
-# Plot 2: Asylum Processing Rule Cohort Report by Homeland Security (2023)
-data <- read.csv("2023_plcy_asylum-processing-rule-cohort-report_fy2023_july.csv")
-
-data_long <- data %>%
-  gather(key = "Month", value = "Count", -Asylum.Processing.Rule.Cohort.Report..Outcome.Summary)
-
-outcome_data <- data_long %>%
-  filter(Asylum.Processing.Rule.Cohort.Report..Outcome.Summary == "AMI-Eligible Credible Fear Claim Outcomes")
-
-month_mapping <- c("Jan.23" = "January", "Feb.23" = "February", "Mar.23" = "March", "Apr.23" = "April", "May.23" = "May", "Jun.23" = "June")
-
-outcome_data$Month <- factor(outcome_data$Month, levels = colnames(data)[-1])
-outcome_data$Month <- month_mapping[outcome_data$Month]
-
-outcome_data <- outcome_data %>% filter(Month %in% c("January", "February", "March", "April", "May", "June"))
-outcome_data$Count <- as.numeric(outcome_data$Count)
-outcome_data$Month <- factor(outcome_data$Month, levels = c("January", "February", "March", "April", "May", "June"))
-
-plot_outcomes <- ggplot(data = outcome_data, aes(x = Month, y = Count, group = 1)) +
-  geom_line() +
-  labs(title = "Asylum Processing Rule Cohort Report by Homeland Security (2023)", x = "Month", y = "Count")
-
-# Combine the plots
-combined_plot <- grid.arrange(plot_arrests, plot_outcomes, ncol = 2)
-
-# Print the combined plot
-print(combined_plot)
-
-
+print(scatter_plot)
 ```
-
-From this data, we get to see a very interesting dynamic. Although data on immigration within New York City is extremely limited, especially for new immigrants within the last 6 months, I was able to use national data to display a trend. Due to the fact that large cities like NYC have been most responsible with dealing with immigrants on a worldwide stage, it makes sense that information gathered nationally would be telling to trends within the city. However, this is far less true for smaller cities across the nation that didn't traditionally deal with these populations. Thus, when you see the new visualization of the Homeland Secutiy information, you are able to see the number of federally processed cases for immigrants are. The two important relationships between these graphs is (1) the lowest number of processed cases is in May 2023, and that was also the highest level of arrests made in NYC. (2) the lowest number of arrests was made in February 2023 and it was the second highest point of monthly asylum processes by Homeland Security. Although it is not necessarily the perfect sets of data, there seems to be an interesting relationship: with more processed cases the fewer arrests there are in NYC.
-
